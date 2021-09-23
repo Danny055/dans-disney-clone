@@ -3,11 +3,11 @@ import styled from "styled-components";
 import { auth, provider } from "../firebase";
 import { useDispatch, useSelector } from "react-redux";
 import { useHistory } from "react-router-dom";
-import { selectUserName,selectUserPhoto, setUserLoginDetails, } from "../features/user/userSlice";
+import { selectUserName,selectUserPhoto, setSignOutState, setUserLoginDetails, } from "../features/user/userSlice";
 
 const Header = (props) => {
-    const dispatch = useDispatch()
-    const history = useHistory()
+    const dispatch = useDispatch();
+    const history = useHistory();
     const userName = useSelector(selectUserName);
     const userPhoto = useSelector(selectUserPhoto);
 
@@ -21,19 +21,29 @@ const Header = (props) => {
       }, [userName]);
     
     const handleAuth = () => {
+        if(!userName){
         auth
         .signInWithPopup(provider)
         .then((result) => {
             setUser(result.user);
+
         }).catch((error) => {
             alert(error.message)
         });
+    } else if(userName){
+        auth.signOut()
+        .then(() =>{
+            dispatch(setSignOutState());
+            history.push("/");
+        })
+        .catch((error) => alert(error.message));
+        }
     };
 
     const setUser = (user) => {
         dispatch(setUserLoginDetails({
             name: user.displayName,
-            email:user.email,
+            email: user.email,
             photo: user.photoURL,
          })
         );
@@ -89,7 +99,7 @@ const Header = (props) => {
     );
 };
 
-const Nav= styled.nav`
+const Nav = styled.nav`
     position: fixed;
     top: 0;
     left: 0;
@@ -176,11 +186,11 @@ const NavMenu = styled.div`
         }
     }
 }
-   /*
+   
     @media (max-width: 768px) {
         display: none;
     }
-    */
+    
 `;
 const Login = styled.a`
     background-color: rgb( 0, 0, 0, 0.6);
